@@ -1,7 +1,8 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
-import { PrimaryButton,TextInput } from "@coral-xyz/react-common";
+import { PrimaryButton, TextInput } from "@coral-xyz/react-common";
 import { useCustomTheme } from "@coral-xyz/themes";
 import { AlternateEmail } from "@mui/icons-material";
+import PersonIcon from "@mui/icons-material/Person";
 import { Box, InputAdornment } from "@mui/material";
 
 import { Header, SubtextParagraph } from "../../common";
@@ -11,15 +12,25 @@ export const UsernameForm = ({
   onNext,
 }: {
   inviteCode: string;
-  onNext: (username: string) => void;
+  onNext: (username: string, firstname: string, lastname: string) => void;
 }) => {
   const [username, setUsername] = useState("");
+  const [firstname, setFirstname] = useState("");
+  const [lastname, setLastname] = useState("");
   const [error, setError] = useState("");
+  const [firstNameError, setFirstNameError] = useState("");
+  const [lastNameError, setLastNameError] = useState("");
   const theme = useCustomTheme();
 
   useEffect(() => {
     setError("");
   }, [username]);
+  useEffect(() => {
+    setFirstNameError("");
+  }, [firstname]);
+  useEffect(() => {
+    setLastNameError("");
+  }, [lastname]);
 
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
@@ -32,14 +43,36 @@ export const UsernameForm = ({
           },
         });
         const json = await res.json();
-        if (!res.ok) throw new Error(json.message || "There was an error");
-
-        onNext(username);
+        if (!res.ok) {
+          if (firstname.length < 3 || firstname.length > 15) {
+            setFirstNameError(
+              "First name should be between 3 to 15 characters"
+            );
+          }
+          if (lastname.length < 3 || lastname.length > 15) {
+            setLastNameError("Last name should be between 3 to 15 characters");
+          }
+          setError(json.message);
+          throw new Error(json.message || "There was an error");
+        }
+        if (firstname.length < 3 || firstname.length > 15) {
+          setFirstNameError("First name should be between 3 to 15 characters");
+          if (lastname.length < 3 || lastname.length > 15) {
+            setLastNameError("Last name should be between 3 to 15 characters");
+          }
+          throw new Error("invalid name field");
+        }
+        if (lastname.length < 3 || lastname.length > 15) {
+          setLastNameError("Last name should be between 3 to 15 characters");
+          throw new Error("invalid name field");
+        }
+        onNext(username, firstname, lastname);
       } catch (err: any) {
-        setError(err.message);
+        console.log(err);
+        // setError(err.message);
       }
     },
-    [username]
+    [username, firstname, lastname]
   );
 
   return (
@@ -53,9 +86,9 @@ export const UsernameForm = ({
         justifyContent: "space-between",
       }}
     >
-      <Box style={{ margin: "24px" }}>
+      <Box style={{ margin: "24px 24px 8px 24px" }}>
         <Header text="Claim your username" />
-        <SubtextParagraph style={{ margin: "16px 0" }}>
+        <SubtextParagraph style={{ margin: "8px 0" }}>
           Others can see and find you by this username, and it will be
           associated with your primary wallet address.
           <br />
@@ -70,10 +103,74 @@ export const UsernameForm = ({
         style={{
           marginLeft: "16px",
           marginRight: "16px",
-          marginBottom: "16px",
+          marginBottom: "14px",
         }}
       >
-        <Box style={{ marginBottom: "16px" }}>
+        <Box style={{ marginBottom: "12px" }}>
+          <TextInput
+            inputProps={{
+              name: "firstname",
+              autoComplete: "off",
+              spellCheck: "false",
+              autoFocus: true,
+            }}
+            placeholder="First Name"
+            type="text"
+            value={firstname}
+            setValue={(e) => {
+              setFirstname(
+                e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "")
+              );
+            }}
+            error={firstNameError ? true : false}
+            errorMessage={firstNameError}
+            startAdornment={
+              <InputAdornment position="start">
+                <PersonIcon
+                  style={{
+                    color: theme.custom.colors.secondary,
+                    fontSize: 18,
+                    marginRight: -2,
+                    userSelect: "none",
+                  }}
+                />
+              </InputAdornment>
+            }
+          />
+        </Box>
+        <Box style={{ marginBottom: "12px" }}>
+          <TextInput
+            inputProps={{
+              name: "lastname",
+              autoComplete: "off",
+              spellCheck: "false",
+              autoFocus: true,
+            }}
+            placeholder="Last Name"
+            type="text"
+            value={lastname}
+            setValue={(e) => {
+              setLastname(
+                e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "")
+              );
+            }}
+            error={lastNameError ? true : false}
+            errorMessage={lastNameError}
+            startAdornment={
+              <InputAdornment position="start">
+                <PersonIcon
+                  style={{
+                    color: theme.custom.colors.secondary,
+                    fontSize: 18,
+                    marginRight: -2,
+                    userSelect: "none",
+                  }}
+                />
+              </InputAdornment>
+            }
+          />
+        </Box>
+        <Box style={{ marginBottom: "12px" }}>
           <TextInput
             inputProps={{
               name: "username",
